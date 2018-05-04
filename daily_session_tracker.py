@@ -9,14 +9,12 @@ class SessionTracker(object):
         self.returned_items = {}
         self.open_markets = []
 
-
-
     def TellMarkets(self):
         
         # Grabs the Current time in two different formats, adjust in future
         today = datetime.date.today()
-        currentTime = datetime.datetime.now()
-
+        currentTime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+        
         # standard holidays for United States, Great Britian, Japan, and Australia 
         us_holidays = holidays.US()
         britian_holidays = holidays.England()
@@ -89,7 +87,20 @@ class SessionTracker(object):
         japan_has_holiday = False
         britian_has_holiday = False
         australia_has_holiday = False
+        markets_closed = False
 
+        if int(currentTime.weekday()) == 4 or 5 or 6:
+            if currentTime.hour >= 21 and int(currentTime.weekday()) == 4:
+                markets_closed = True
+            if currentTime.hour < 21 and int(currentTime.weekday()) == 6:
+                markets_closed = True
+            if int(currentTime.weekday()) == 5:
+                markets_closed = True
+
+       
+        if markets_closed == True:
+            self.open_markets = 'None'
+            return self
         
         
         if us_holidays.get(today) is not None:
@@ -124,36 +135,39 @@ class SessionTracker(object):
 
         # checks to see if we are in daylight saving time
         #  need to make dynamic for what is being returned
-        if bool(datetime.datetime.now(pytz.timezone("America/Los_Angeles")).dst()):
-            if currentTime.hour >= 15 or currentTime.hour == 0:
+    
+        if bool(datetime.datetime.now(pytz.timezone("UTC")).dst()):
+            if currentTime.hour >= 22 or currentTime.hour == 7:
                 if not australia_has_holiday:
                     self.open_markets.append('Australia')
 
-            if currentTime.hour >= 16 or currentTime.hour <= 1:
+            if currentTime.hour >= 23 or currentTime.hour <= 8:
                 if not japan_has_holiday:
                     self.open_markets.append('Japan')
 
-            if currentTime.hour >= 0 and currentTime.hour <= 9:
+            if currentTime.hour >= 7 and currentTime.hour <= 16:
                 if not britian_has_holiday:
                     self.open_markets.append('Britian')
 
-            if currentTime.hour >= 5 and currentTime.hour <= 14:
+            if currentTime.hour >= 13 and currentTime.hour <= 21:
                 if not us_has_holiday:
                     self.open_markets.append('US')
             
 
         else:
-            if currentTime.hour >= 13 and currentTime.hour <= 22:
+            if currentTime.hour >= 20 and currentTime.hour <= 5:
                 if not australia_has_holiday:
                     self.open_markets.append('Australia')
-            if currentTime.hour >= 15 or currentTime.hour == 0:
+            if currentTime.hour >= 22 or currentTime.hour == 7:
                 if not japan_has_holiday:
                     self.open_markets.append('Japan')
-            if currentTime.hour >= 0 and currentTime.hour <= 9:
+            if currentTime.hour >= 7 and currentTime.hour <= 16:
                 if not britian_has_holiday:
                     self.open_markets.append('Britian')
-            if currentTime.hour >= 5 and currentTime.hour <= 14:
+            if currentTime.hour >= 12 and currentTime.hour <= 21:
                 if not us_has_holiday:
                     self.open_markets.append('US')
-    
+      
         return (self)
+
+
